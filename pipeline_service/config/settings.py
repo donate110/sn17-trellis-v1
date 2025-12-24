@@ -54,6 +54,33 @@ class Settings(BaseSettings):
     )
     compression: bool = Field(default=False, env="COMPRESSION")
 
+    # Mesh post-processing settings
+    enable_mesh_smoothing: bool = Field(
+        default=True,
+        env="ENABLE_MESH_SMOOTHING",
+        description="Enable mesh smoothing post-processing",
+    )
+    smoothing_iterations: int = Field(
+        default=2,
+        env="SMOOTHING_ITERATIONS",
+        description="Number of smoothing iterations (1-5 recommended)",
+    )
+    smoothing_strength: float = Field(
+        default=0.5,
+        env="SMOOTHING_STRENGTH",
+        description="Smoothing strength (0.0-1.0, higher = more smoothing)",
+    )
+    enable_normal_refinement: bool = Field(
+        default=True,
+        env="ENABLE_NORMAL_REFINEMENT",
+        description="Refine mesh normals for better lighting",
+    )
+    trellis_output_formats: list[str] = Field(
+        default=["gaussian", "mesh"],
+        env="TRELLIS_OUTPUT_FORMATS",
+        description="Output formats for Trellis (gaussian, mesh, radiance_field)",
+    )
+
     # Qwen Edit settings
     qwen_edit_base_model_path: str = Field(
         default="Qwen-Image-Edit-2509/Qwen-Image-Edit-2509-Lightning-8steps-V1.0-bf16.safetensors",

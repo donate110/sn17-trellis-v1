@@ -15,12 +15,14 @@ from logger_config import logger
 from libs.trellis.pipelines import TrellisImageTo3DPipeline
 from schemas import TrellisResult, TrellisRequest, TrellisParams
 
+
 class TrellisService:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.pipeline: Optional[TrellisImageTo3DPipeline] = None
         self.gpu = settings.trellis_gpu
         self.default_params = TrellisParams.from_settings(self.settings)
+        self.output_formats = settings.trellis_output_formats
 
     async def startup(self) -> None:
         logger.info("Loading Trellis pipeline...")
@@ -51,7 +53,9 @@ class TrellisService:
             raise RuntimeError("Trellis pipeline not loaded.")
 
         image_rgb = trellis_request.image.convert("RGB")
-        logger.info(f"Generating Trellis {trellis_request.seed=} and image size {trellis_request.image.size}")
+        logger.info(
+            f"Generating Trellis {trellis_request.seed=} and image size {trellis_request.image.size}"
+        )
 
         params = self.default_params.overrided(trellis_request.params)
 
@@ -67,14 +71,15 @@ class TrellisService:
                 slat_sampler_params={
                     "steps": params.slat_steps,
                     "cfg_strength": params.slat_cfg_strength,
-                    
                 },
                 preprocess_image=False,
-                formats=["gaussian"],
+                formats=self.output_formats,
                 num_oversamples=params.num_oversamples,
             )
 
             generation_time = time.time() - start
+
+            # Extract Gaussian representation
             gaussian = outputs["gaussian"][0]
 
             # Save ply to buffer
@@ -83,7 +88,7 @@ class TrellisService:
             buffer.seek(0)
 
             result = TrellisResult(
-                ply_file=buffer.getvalue() if buffer else None # bytes
+                ply_file=buffer.getvalue() if buffer else None  # bytes
             )
 
             logger.success(f"Trellis finished generation in {generation_time:.2f}s.")
@@ -91,4 +96,3 @@ class TrellisService:
         finally:
             if buffer:
                 buffer.close()
-
